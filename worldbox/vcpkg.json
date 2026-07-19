@@ -1,0 +1,10 @@
+{
+  "name": "worldbox",
+  "version": "1.0.0",
+  "dependencies": [
+    "sdl2",
+    "glew",
+    "imgui"
+  ],
+  "builtin-baseline": "908da3a305a0a8028d9602ab241b433652b3df69"
+}

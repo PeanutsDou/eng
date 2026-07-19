@@ -1,5 +1,6 @@
 # Dependencies
 build/
+vcpkg_installed/
 
 # Godot source code (read-only reference, too large)
 godot/

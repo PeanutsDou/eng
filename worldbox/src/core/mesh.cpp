@@ -1,8 +1,8 @@
-#include "mesh.h"
+#include "core/mesh.h"
 
-void Mesh::upload(const std::vector<float>& vertices,
-                   const std::vector<uint32_t>& indices,
-                   int stride) {
+void Mesh::upload(const float* vertices, int vertex_count,
+                   const uint32_t* indices, int idx_count,
+                   const VertexLayout& layout) {
     // Free any old GPU resources first
     cleanup();
 
@@ -14,24 +14,32 @@ void Mesh::upload(const std::vector<float>& vertices,
     // Upload vertex data
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER,
-                 vertices.size() * sizeof(float),
-                 vertices.data(),
+                 vertex_count * layout.stride_bytes,
+                 vertices,
                  GL_STATIC_DRAW);
 
-    // Attribute 0: position (first 2 floats of each vertex)
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
-                          stride * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    // Configure every attribute from the layout
+    for (const auto& attr : layout.attrs) {
+        glVertexAttribPointer(
+            attr.location,
+            attr.count,
+            attr.type,
+            GL_FALSE,
+            layout.stride_bytes,
+            (void*)attr.offset
+        );
+        glEnableVertexAttribArray(attr.location);
+    }
 
     // Upload index data (if any)
-    if (!indices.empty()) {
+    if (idx_count > 0 && indices != nullptr) {
         glGenBuffers(1, &ebo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                     indices.size() * sizeof(uint32_t),
-                     indices.data(),
+                     idx_count * sizeof(uint32_t),
+                     indices,
                      GL_STATIC_DRAW);
-        index_count = (int)indices.size();
+        index_count = idx_count;
     } else {
         index_count = 0;
     }
@@ -43,9 +51,6 @@ void Mesh::draw() const {
     glBindVertexArray(vao);
     if (index_count > 0) {
         glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, nullptr);
-    } else {
-        // Fallback: draw all vertices as triangles (crude, caller should use indices)
-        // This path is intentionally not used — indices should always be provided.
     }
 }
 
